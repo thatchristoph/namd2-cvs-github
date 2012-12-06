@@ -1,0 +1,12 @@
+
+CUDADIR=/cygdrive/c/PROGRA~1/NVIDIA~1/CUDA/v4.0
+CUDAINCL=-I$(CUDADIR)/include
+CUDALIB=-L$(CUDADIR)/lib/x64 -lcudart
+CUDASODIR=$(CUDADIR)/bin
+LIBCUDARTSO=cudart64_40_17.dll
+CUDAFLAGS=-DNAMD_CUDA
+CUDAOBJS=$(CUDAOBJSRAW)
+NATIVEPATH=cygpath -d
+CUDA=$(CUDAFLAGS) -I. $(CUDAINCL)
+CUDACC=$(CUDADIR)/bin/nvcc -DWIN32 -DWIN64 --keep --keep-dir obj -O3 --maxrregcount 32 -gencode arch=compute_11,code=sm_11 -gencode arch=compute_20,code=sm_20 -gencode arch=compute_20,code=compute_20 -m64 $(CUDA)
+

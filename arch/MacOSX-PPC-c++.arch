@@ -1,0 +1,9 @@
+NAMD_ARCH = MacOSX-PPC
+CHARMARCH = net-darwin-ppc
+
+CXX = c++ -D_NO_MALLOC_H
+CXXOPTS = -O
+CXXTHREADOPTS = 
+CC = cc
+COPTS = -O
+

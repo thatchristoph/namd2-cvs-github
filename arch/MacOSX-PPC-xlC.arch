@@ -1,0 +1,9 @@
+NAMD_ARCH = MacOSX-PPC
+CHARMARCH = net-darwin-ppc-xlc
+
+CXX = xlc++_r  -D_NO_MALLOC_H 
+CXXOPTS = -O3 -qaggrcopy=nooverlap -qalias=addrtaken:typeptr:ansi -DARCH_POWERPC
+CXXNOALIASOPTS = -O3 -qaggrcopy=nooverlap -qalias=addrtaken:allptrs:typeptr:ansi -DARCH_POWERPC
+CC = cc
+COPTS = -O
+

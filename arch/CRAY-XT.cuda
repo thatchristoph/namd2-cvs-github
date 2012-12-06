@@ -1,0 +1,21 @@
+
+CUDADIR=$(CRAY_CUDATOOLKIT_DIR)
+CUDAINCL=$(CRAY_CUDATOOLKIT_INCLUDE_OPTS)
+CUDALIB=$(CRAY_CUDATOOLKIT_POST_LINK_OPTS) -lcudart
+CUDASODIR=$(CUDADIR)/lib64
+LIBCUDARTSO=libcudart.so.5.0
+CUDAFLAGS=-DNAMD_CUDA
+CUDAOBJS=$(CUDAOBJSRAW)
+CUDA=$(CUDAFLAGS) -I. $(CUDAINCL)
+CUDACC=$(CUDADIR)/bin/nvcc -O3 -ftz=true --maxrregcount 32 -arch sm_35 -Xcompiler "-m64" $(CUDA)
+
+
+loaded_modules := $(subst :, ,$(LOADEDMODULES))
+
+module := $(filter cudatoolkit/%,$(loaded_modules))
+ifeq (,$(module))
+  $(error module cudatoolkit is not loaded)
+else
+  $(info found module $(module))
+endif
+

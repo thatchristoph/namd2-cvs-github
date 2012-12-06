@@ -1,0 +1,11 @@
+
+CUDADIR=/usr/local/encap/cuda-4.0
+CUDAINCL=-I$(CUDADIR)/include
+CUDALIB=-L$(CUDADIR)/lib64 -lcudart
+CUDASODIR=$(CUDADIR)/lib64
+LIBCUDARTSO=libcudart.so.4
+CUDAFLAGS=-DNAMD_CUDA
+CUDAOBJS=$(CUDAOBJSRAW)
+CUDA=$(CUDAFLAGS) -I. $(CUDAINCL)
+CUDACC=$(CUDADIR)/bin/nvcc -O3 --maxrregcount 32 -gencode arch=compute_11,code=sm_11 -gencode arch=compute_20,code=sm_20 -gencode arch=compute_20,code=compute_20 -Xcompiler "-m64" $(CUDA)
+

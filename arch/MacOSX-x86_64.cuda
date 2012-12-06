@@ -1,0 +1,11 @@
+
+CUDADIR=/usr/local/cuda
+CUDAINCL=-I$(CUDADIR)/include
+CUDALIB=-L$(CUDADIR)/lib -lcudart
+CUDASODIR=$(CUDADIR)/lib
+LIBCUDARTSO=libcudart.dylib
+CUDAFLAGS=-DNAMD_CUDA
+CUDAOBJS=$(CUDAOBJSRAW)
+CUDA=$(CUDAFLAGS) -I. $(CUDAINCL)
+CUDACC=$(CUDADIR)/bin/nvcc -O3 --maxrregcount 32 -gencode arch=compute_11,code=sm_11 -gencode arch=compute_20,code=sm_20  -gencode arch=compute_20,code=compute_20 --machine 64 $(CUDA)
+

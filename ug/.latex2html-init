@@ -1,0 +1,6 @@
+
+$BODYTEXT = 'BGCOLOR="WHITE"';
+$WHITE_BACKGROUND = 1;
+$LATEX_COLOR = "\\pagecolor{white}";
+
+1;  # this must be the last line

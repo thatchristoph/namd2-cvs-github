@@ -1,0 +1,132 @@
+diff --git a/src/arch/mpi/conv-common.h b/src/arch/mpi/conv-common.h
+index 3e9cd85..a2cd0c8 100644
+--- a/src/arch/mpi/conv-common.h
++++ b/src/arch/mpi/conv-common.h
+@@ -34,6 +34,8 @@
+ 
+ #define CMK_CCS_AVAILABLE                                  1
+ 
++#define CMK_REPLICAS                                       1
++
+ #define NODE_0_IS_CONVHOST                                 1
+ 
+ #define CMK_IMMEDIATE_MSG				   1
+diff --git a/src/arch/mpi/machine.c b/src/arch/mpi/machine.c
+index e6ac291..050be5d 100644
+--- a/src/arch/mpi/machine.c
++++ b/src/arch/mpi/machine.c
+@@ -273,6 +273,104 @@ static void MachinePostNonLocalForMPI();
+ #include "machine-lrts.h"
+ #include "machine-common-core.c"
+ 
++#if CMK_REPLICAS
++
++MPI_Comm MPI_COMM_LOCAL;
++MPI_Comm MPI_COMM_CROSS;
++int numReplicas;
++int myReplicaID;
++
++static void ReplicaInit(int argc, char **argv) {
++    int num_replicas;
++    if (CmiGetArgIntDesc(argv,"+replicas",&num_replicas,"number of replicas to split run into")) {
++        int num_nodes, my_node, replica_size, my_rank_in_replica;
++        char *stdoutbase;
++        MPI_Comm_size(MPI_COMM_WORLD, &num_nodes);
++        MPI_Comm_rank(MPI_COMM_WORLD, &my_node);
++        if ( num_replicas < 1 ) {
++          if ( my_node == 0 ) {
++            fprintf(stderr,"Exiting: Number of replicas is less than 1.\n");
++          }
++          MPI_Finalize();  exit(0);
++        }
++        if ( num_nodes < num_replicas ) {
++          if ( my_node == 0 ) {
++            fprintf(stderr,"Exiting: Number of replicas is greater than number of nodes.\n");
++          }
++          MPI_Finalize();  exit(0);
++        }
++        if ( num_nodes % num_replicas ) {
++          if ( my_node == 0 ) {
++            fprintf(stderr,"Exiting: Number of replicas does not evenly divide number of nodes.\n");
++          }
++          MPI_Finalize();  exit(0);
++        }
++        numReplicas = num_replicas;
++        replica_size = num_nodes / num_replicas;
++        myReplicaID = my_node / replica_size;
++        my_rank_in_replica = my_node % replica_size;
++        if ( my_node == 0 ) {
++          printf("Running %d replicas of size %d each.\n",numReplicas,replica_size);
++        }
++        MPI_Comm_split(MPI_COMM_WORLD, myReplicaID, my_rank_in_replica, &MPI_COMM_LOCAL);
++        MPI_Comm_split(MPI_COMM_WORLD, my_rank_in_replica, myReplicaID, &MPI_COMM_CROSS);
++        if ( CmiGetArgStringDesc(argv,"+stdout",&stdoutbase,"base filename to redirect replica stdout to") ) {
++          char *stdoutpath;
++          stdoutpath = malloc(strlen(stdoutbase) + 30);
++          sprintf(stdoutpath, stdoutbase, myReplicaID, myReplicaID, myReplicaID);
++          if ( ! strcmp(stdoutpath, stdoutbase) ) {
++            sprintf(stdoutpath, "%s.%d", stdoutbase, myReplicaID);
++          }
++          if ( my_node == 0 ) {
++            printf("Redirecting stdout to files %s through %d\n",stdoutpath,numReplicas-1);
++          }
++          if ( ! freopen(stdoutpath, "a", stdout) ) {
++            fprintf(stderr,"Rank %d failed redirecting stdout to file %s: %s\n", my_node, stdoutpath, strerror(errno));
++            CmiAbort("Error redirecting stdout to file.");
++          }
++          free(stdoutpath);
++        }
++    } else {
++        /* MPI_Comm_dup(MPI_COMM_WORLD, &MPI_COMM_LOCAL); */
++        MPI_COMM_LOCAL = MPI_COMM_WORLD;
++        MPI_COMM_CROSS = MPI_COMM_SELF;
++        numReplicas = 1;
++        myReplicaID = 0;
++    }
++}
++#ifdef MPI_COMM_WORLD
++#undef MPI_COMM_WORLD
++#endif
++#define MPI_COMM_WORLD MPI_COMM_LOCAL
++
++int CmiNumReplicas() { return numReplicas; }
++
++int CmiMyReplica() { return myReplicaID; }
++
++void CmiReplicaSendrecv(void *sendbuf, int sendcount, int dest, void *recvbuf, int recvcount, int source) {
++    MPI_Status sts;
++    if ( source < 0 ) source = MPI_ANY_SOURCE;
++    MPI_Sendrecv(sendbuf, sendcount, MPI_BYTE, dest, 1,
++                 recvbuf, recvcount, MPI_BYTE, source, 1,
++                 MPI_COMM_CROSS, &sts);
++}
++
++void CmiReplicaSend(void *buf, int count, int dest) {
++    MPI_Send(buf, count, MPI_BYTE, dest, 1, MPI_COMM_CROSS);
++}
++
++void CmiReplicaRecv(void *buf, int count, int source) {
++    MPI_Status sts;
++    if ( source < 0 ) source = MPI_ANY_SOURCE;
++    MPI_Recv(buf, count, MPI_BYTE, source, 1, MPI_COMM_CROSS, &sts);
++}
++
++void CmiReplicaBarrier() {
++    MPI_Barrier(MPI_COMM_CROSS);
++}
++
++#endif
++
+ /* The machine specific msg-sending function */
+ 
+ #if CMK_SMP
+@@ -1067,6 +1165,9 @@ static void MachineInitForMPI(int *argc, char ***argv, int *numNodes, int *myNod
+ #endif
+     largc = *argc;
+     largv = *argv;
++#if CMK_REPLICAS
++    ReplicaInit(largc,largv);
++#endif
+     MPI_Comm_size(MPI_COMM_WORLD, numNodes);
+     MPI_Comm_rank(MPI_COMM_WORLD, myNodeID);
+ 

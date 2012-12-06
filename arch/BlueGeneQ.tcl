@@ -1,0 +1,7 @@
+
+TCLDIR=$(HOME)/tcl-bgq/unix
+TCLINCL=-I$(TCLDIR)/include
+TCLLIB=-L$(TCLDIR)/lib -ltcl8.4
+TCLFLAGS=-DNAMD_TCL
+TCL=$(TCLINCL) $(TCLFLAGS)
+

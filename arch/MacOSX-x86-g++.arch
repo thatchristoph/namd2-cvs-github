@@ -1,0 +1,9 @@
+NAMD_ARCH = MacOSX-x86
+CHARMARCH = multicore-darwin-x86
+
+CXX = g++ -D_NO_MALLOC_H
+FLOATOPTS = -O3 -fomit-frame-pointer -march=pentium-m -msse3 -ffast-math
+CXXOPTS = $(FLOATOPTS)
+CC = gcc
+COPTS = $(FLOATOPTS)
+

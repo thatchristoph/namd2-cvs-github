@@ -1,0 +1,12 @@
+NAMD_ARCH = Linux-x86_64
+CHARMARCH = multicore-linux64-iccstatic
+
+FLOATOPTS = -ip -fno-rtti -no-vec
+
+CXX = icpc
+CXXOPTS = -i-static -O2 $(FLOATOPTS)
+CXXNOALIASOPTS = -O2 -fno-alias $(FLOATOPTS)
+
+CC = icc
+COPTS = -i-static -O2 $(FLOATOPTS)
+

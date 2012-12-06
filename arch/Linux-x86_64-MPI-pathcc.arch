@@ -1,0 +1,9 @@
+NAMD_ARCH = Linux-x86_64
+CHARMARCH = mpi-linux-x86_64-pathcc
+
+FLOATOPTS= -lpathfortran -O3 -CG:local_fwd_sched=on -LNO:opt=0 -OPT:unroll_times_max=8:div_split=ON:roundoff=2
+CXX = pathCC -m64 -fPIC -DSOCKLEN_T=socklen_t -I$(CHARM_LOC)/include 
+CXXOPTS = $(FLOATOPTS) -OPT:alias=typed
+CXXNOALIASOPTS = $(FLOATOPTS) -OPT:alias=restrict
+CC = pathcc -m64 -fPIC
+COPTS = $(FLOATOPTS) -OPT:alias=typed
